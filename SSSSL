@@ -1,0 +1,61 @@
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local Status = Instance.new("TextLabel")
+local Border = Instance.new("Frame")
+
+ScreenGui.Name = "SkidSkidSkidSahur"
+ScreenGui.Parent = game:GetService("CoreGui")
+
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -75)
+MainFrame.Size = UDim2.new(0, 300, 0, 150)
+MainFrame.BorderSizePixel = 0
+
+Border.Name = "Border"
+Border.Parent = MainFrame
+Border.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Border.Position = UDim2.new(0, -2, 0, -2)
+Border.Size = UDim2.new(1, 4, 1, 4)
+Border.ZIndex = 0
+
+Title.Name = "Title"
+Title.Parent = MainFrame
+Title.Text = "MADE BY UNC (MADE WITH 1S AND 0S)"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.BackgroundTransparency = 1
+Title.Font = Enum.Font.Code
+Title.TextSize = 14
+
+Status.Name = "Status"
+Status.Parent = MainFrame
+Status.Text = "this is loader... stop tryna steal my stuff skid........."
+Status.TextColor3 = Color3.fromRGB(200, 200, 200)
+Status.Position = UDim2.new(0, 10, 0, 60)
+Status.Size = UDim2.new(1, -20, 0, 80)
+Status.BackgroundTransparency = 1
+Status.Font = Enum.Font.Code
+Status.TextSize = 12
+Status.TextWrapped = true
+
+task.spawn(function()
+    while task.wait() do
+        local hue = tick() % 5 / 5
+        local color = Color3.fromHSV(hue, 1, 1)
+        Border.BackgroundColor3 = color
+        Title.TextColor3 = color
+    end
+end)
+
+
+    if game.PlaceId == 139766023909499 then
+    Status.Text = "Slap Duels Detected. Loading UNC..."
+    task.wait(1)
+    Status:Destroy()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/zvw3/skidskidskidahur/main/slapduelsskid"))()
+else
+    Status.Text = "this game is not supported by UNC ):"
+end
