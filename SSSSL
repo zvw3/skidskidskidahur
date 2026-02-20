@@ -52,10 +52,20 @@ end)
 
 
     if game.PlaceId == 139766023909499 then
-    Status.Text = "Slap Duels Detected. Loading UNC..."
+    Status.Text = "Slap Duels Detected. Powered by UNC..."
     task.wait(1)
     Status:Destroy()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/zvw3/skidskidskidahur/main/slapduelsskid"))()
+    elseif game.PlaceId == 8260276694 then
+    Status.Text = "Ability Wars Detected. Powered by UNC..."
+    task.wait(1)
+    Status:Destroy()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/zvw3/skidskidskidahur/main/abilitywarsskid"))()
+    elseif game.PlaceId == 8260276694 then 
+Status.Text = "TSB Detected. Powered by UNC..."
+    task.wait(1)
+    Status:Destroy()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/zvw3/skidskidskidahur/main/tsbskid"))()
 else
     Status.Text = "this game is not supported by UNC ):"
 end
