@@ -5,7 +5,19 @@
 ██║╚██╔╝██║██╔══██║██║  ██║██╔══╝      ██╔══██╗  ╚██╔╝      ██║   ██║██║╚██╗██║██║     
 ██║ ╚═╝ ██║██║  ██║██████╔╝███████╗    ██████╔╝   ██║       ╚██████╔╝██║ ╚████║╚██████╗
 ╚═╝     ╚═╝╚═╝  ╚═╝╚═════╝ ╚══════╝    ╚═════╝    ╚═╝        ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝
-"script is fully open source, SSSS isnt the best but is ment to be a base to build on."]]
+script is fully open source, SSSS isnt the best but is ment to be a base to build on.
+]]
+
+local Players = game:GetService("Players")
+local lp = Players.LocalPlayer
+local run = game:GetService("RunService")
+local uis = game:GetService("UserInputService")
+local ts = game:GetService("TweenService")
+
+-- GUI Creation
+local guiTarget = game:GetService("CoreGui") or lp:WaitForChild("PlayerGui")
+local old = guiTarget:FindFirstChild("SkidSkidSkidSahur")
+if old then old:Destroy() end
 
 local ScreenGui = Instance.new("ScreenGui")
 local MainFrame = Instance.new("Frame")
@@ -14,7 +26,8 @@ local Status = Instance.new("TextLabel")
 local Border = Instance.new("Frame")
 
 ScreenGui.Name = "SkidSkidSkidSahur"
-ScreenGui.Parent = game:GetService("CoreGui")
+ScreenGui.Parent = guiTarget
+ScreenGui.ResetOnSpawn = false
 
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
@@ -22,6 +35,8 @@ MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 MainFrame.Position = UDim2.new(0.5, -150, 0.5, -75)
 MainFrame.Size = UDim2.new(0, 300, 0, 150)
 MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
 
 Border.Name = "Border"
 Border.Parent = MainFrame
@@ -50,6 +65,7 @@ Status.Font = Enum.Font.Code
 Status.TextSize = 12
 Status.TextWrapped = true
 
+-- Rainbow Animation
 task.spawn(function()
     while task.wait() do
         local hue = tick() % 5 / 5
@@ -59,22 +75,171 @@ task.spawn(function()
     end
 end)
 
+-- Universal Panel Builder
+local function createUniversalPanel()
+    Status.Visible = false
+    
+    -- Resize to make room for buttons
+    ts:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad), {Size = UDim2.new(0, 400, 0, 250)}):Play()
+    MainFrame.Position = UDim2.new(0.5, -200, 0.5, -125)
+    
+    -- Spinning Image
+    local spinImg = Instance.new("ImageLabel", MainFrame)
+    spinImg.Size = UDim2.new(0, 45, 0, 45)
+    spinImg.Position = UDim2.new(1, -50, 0, 5)
+    spinImg.BackgroundTransparency = 1
+    spinImg.Image = "rbxassetid://128841433177194"
+    
+    task.spawn(function()
+        while task.wait() do
+            spinImg.Rotation = spinImg.Rotation + 3
+        end
+    end)
+    
+    -- Universal Features Globals
+    getgenv().UncFly = false
+    getgenv().UncNoclip = false
+    getgenv().UncSpeed = false
+    
+    local flySpeed = 50
+    local bg = nil
+    local bv = nil
+    
+    -- Button function
+    local function makeBtn(txt, pos, func)
+        local b = Instance.new("TextButton", MainFrame)
+        b.Size = UDim2.new(0, 180, 0, 35)
+        b.Position = pos
+        b.Text = txt
+        b.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        b.TextColor3 = Color3.new(1, 1, 1)
+        b.Font = Enum.Font.Code
+        b.BorderSizePixel = 0
+        b.MouseButton1Click:Connect(func)
+        return b
+    end
+    
+    -- 1. Fly Toggle
+    local flyBtn = makeBtn("Fly (F): OFF", UDim2.new(0, 10, 0, 50), function() end)
+    local function toggleFly()
+        getgenv().UncFly = not getgenv().UncFly
+        flyBtn.Text = "Fly (F): " .. (getgenv().UncFly and "ON" or "OFF")
+        flyBtn.BackgroundColor3 = getgenv().UncFly and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(40, 40, 40)
+        
+        local char = lp.Character
+        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+        local hrp = char.HumanoidRootPart
+        
+        if getgenv().UncFly then
+            -- Setup Fly Physics
+            bg = Instance.new("BodyGyro", hrp)
+            bg.P = 9e4
+            bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+            bg.cframe = hrp.CFrame
+            
+            bv = Instance.new("BodyVelocity", hrp)
+            bv.velocity = Vector3.new(0, 0, 0)
+            bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
+            char.Humanoid.PlatformStand = true
+        else
+            -- Remove Fly
+            if bg then bg:Destroy() end
+            if bv then bv:Destroy() end
+            char.Humanoid.PlatformStand = false
+        end
+    end
+    flyBtn.MouseButton1Click:Connect(toggleFly)
+    
+    -- Fly Keybind
+    uis.InputBegan:Connect(function(i, g)
+        if not g and i.KeyCode == Enum.KeyCode.F then toggleFly() end
+    end)
+    
+    -- Fly Logic Loop
+    run.RenderStepped:Connect(function()
+        if getgenv().UncFly and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") and bg and bv then
+            local cam = workspace.CurrentCamera
+            local moveDir = Vector3.new(0,0,0)
+            
+            if uis:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + cam.CFrame.LookVector end
+            if uis:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - cam.CFrame.LookVector end
+            if uis:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - cam.CFrame.RightVector end
+            if uis:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + cam.CFrame.RightVector end
+            if uis:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0, 1, 0) end
+            if uis:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir = moveDir - Vector3.new(0, 1, 0) end
+            
+            bg.cframe = cam.CFrame
+            bv.velocity = moveDir * flySpeed
+        end
+        
+        -- Noclip Loop
+        if getgenv().UncNoclip and lp.Character then
+            for _, v in pairs(lp.Character:GetDescendants()) do
+                if v:IsA("BasePart") and v.CanCollide then
+                    v.CanCollide = false
+                end
+            end
+        end
+    end)
 
-    if game.PlaceId == 139766023909499 then
+    -- 2. Noclip
+    local ncBtn = makeBtn("Noclip: OFF", UDim2.new(0, 200, 0, 50), function() end)
+    ncBtn.MouseButton1Click:Connect(function()
+        getgenv().UncNoclip = not getgenv().UncNoclip
+        ncBtn.Text = "Noclip: " .. (getgenv().UncNoclip and "ON" or "OFF")
+        ncBtn.BackgroundColor3 = getgenv().UncNoclip and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(40, 40, 40)
+    end)
+
+    -- 3. Speed Boost
+    local spdBtn = makeBtn("Speed Boost: OFF", UDim2.new(0, 10, 0, 95), function() end)
+    spdBtn.MouseButton1Click:Connect(function()
+        getgenv().UncSpeed = not getgenv().UncSpeed
+        spdBtn.Text = "Speed Boost: " .. (getgenv().UncSpeed and "ON" or "OFF")
+        spdBtn.BackgroundColor3 = getgenv().UncSpeed and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(40, 40, 40)
+        if lp.Character and lp.Character:FindFirstChild("Humanoid") then
+            lp.Character.Humanoid.WalkSpeed = getgenv().UncSpeed and 100 or 16
+        end
+    end)
+
+    -- 4. Infinite Jump
+    local ijBtn = makeBtn("Infinite Jump: ON", UDim2.new(0, 200, 0, 95), function() end)
+    ijBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+    uis.JumpRequest:Connect(function()
+        if lp.Character and lp.Character:FindFirstChild("Humanoid") then
+            lp.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end)
+    
+    -- Sub-label for panel
+    local sub = Instance.new("TextLabel", MainFrame)
+    sub.Size = UDim2.new(1, 0, 0, 20)
+    sub.Position = UDim2.new(0, 0, 1, -25)
+    sub.BackgroundTransparency = 1
+    sub.TextColor3 = Color3.new(0.6, 0.6, 0.6)
+    sub.Text = "UNC Universal Engine Loaded"
+    sub.Font = Enum.Font.Code
+    sub.TextSize = 12
+end
+
+-- Game ID Check Logic
+task.wait(1)
+if game.PlaceId == 139766023909499 then
     Status.Text = "Slap Duels Detected. Powered by UNC..."
     task.wait(1)
-    Status:Destroy()
+    ScreenGui:Destroy()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/zvw3/skidskidskidahur/main/slapduelsskid"))()
-    elseif game.PlaceId == 8260276694 then
+elseif game.PlaceId == 8260276694 then
     Status.Text = "Ability Wars Detected. Powered by UNC..."
     task.wait(1)
-    Status:Destroy()
+    ScreenGui:Destroy()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/zvw3/skidskidskidahur/main/abilitywarsskid"))()
-    elseif game.PlaceId == 8260276694 then 
-Status.Text = "TSB Detected. Powered by UNC..."
+elseif game.PlaceId == 10449761463 then 
+    Status.Text = "TSB Detected. Powered by UNC..."
     task.wait(1)
-    Status:Destroy()
+    ScreenGui:Destroy()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/zvw3/skidskidskidahur/main/tsbskid"))()
 else
-    Status.Text = "this game is not supported by UNC ):"
+    Status.Text = "game is not supported by UNC :("
+    task.wait(2)
+    createUniversalPanel()
 end
