@@ -1,0 +1,249 @@
+--[[
+██████╗  ██████╗ ██████╗     ██╗  ██╗██╗   ██╗██████╗ 
+██╔══██╗██╔═══██╗██╔══██╗    ██║  ██║██║   ██║██╔══██╗
+██████╔╝██║   ██║██████╔╝    ███████║██║   ██║██████╔╝
+██╔═══╝ ██║   ██║██╔═══╝     ██╔══██║██║   ██║██╔══██╗
+██║     ╚██████╔╝██║         ██║  ██║╚██████╔╝██████╔╝
+╚═╝      ╚═════╝ ╚═╝         ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ 
+Powered by UNC - This is what you can make with UNC.
+this was made with one gemini prompt just to show how good SSSS could be in the right hands.]]
+
+local Players = game:GetService("Players")
+local lp = Players.LocalPlayer
+local run = game:GetService("RunService")
+local uis = game:GetService("UserInputService")
+local ts = game:GetService("TweenService")
+local coreGui = game:GetService("CoreGui") or lp:WaitForChild("PlayerGui")
+
+-- [ CLEANUP ]
+local old = coreGui:FindFirstChild("PopHub")
+if old then old:Destroy() end
+
+-- [ MAIN UI SETUP ]
+local sg = Instance.new("ScreenGui", coreGui)
+sg.Name = "PopHub"
+sg.ResetOnSpawn = false
+
+local MainFrame = Instance.new("Frame", sg)
+MainFrame.Size = UDim2.new(0, 450, 0, 300)
+MainFrame.Position = UDim2.new(0.5, -225, 0.5, -150)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.ClipsDescendants = true
+
+local corner = Instance.new("UICorner", MainFrame)
+corner.CornerRadius = UDim.new(0, 8)
+
+local stroke = Instance.new("UIStroke", MainFrame)
+stroke.Thickness = 2
+stroke.Color = Color3.fromRGB(255, 0, 0)
+
+-- Rainbow Stroke Animation
+task.spawn(function()
+    while task.wait() do
+        stroke.Color = Color3.fromHSV(tick() % 5 / 5, 1, 1)
+    end
+end)
+
+-- [ HEADER ]
+local Header = Instance.new("Frame", MainFrame)
+Header.Size = UDim2.new(1, 0, 0, 40)
+Header.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+Header.BorderSizePixel = 0
+local hCorner = Instance.new("UICorner", Header)
+hCorner.CornerRadius = UDim.new(0, 8)
+
+local Title = Instance.new("TextLabel", Header)
+Title.Size = UDim2.new(1, -10, 1, 0)
+Title.Position = UDim2.new(0, 10, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "POP HUB"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 18
+Title.TextXAlignment = Enum.TextXAlignment.Left
+
+local SubTitle = Instance.new("TextLabel", Header)
+SubTitle.Size = UDim2.new(1, -10, 1, 0)
+SubTitle.Position = UDim2.new(0, 100, 0, 0)
+SubTitle.BackgroundTransparency = 1
+SubTitle.Text = "Powered by UNC | This is what you can make with UNC"
+SubTitle.TextColor3 = Color3.fromRGB(150, 150, 150)
+SubTitle.Font = Enum.Font.Gotham
+SubTitle.TextSize = 11
+SubTitle.TextXAlignment = Enum.TextXAlignment.Left
+
+-- [ SCROLLING CONTENT ]
+local Scroll = Instance.new("ScrollingFrame", MainFrame)
+Scroll.Size = UDim2.new(1, -20, 1, -50)
+Scroll.Position = UDim2.new(0, 10, 0, 45)
+Scroll.BackgroundTransparency = 1
+Scroll.ScrollBarThickness = 4
+Scroll.BorderSizePixel = 0
+
+local layout = Instance.new("UIGridLayout", Scroll)
+layout.CellSize = UDim2.new(0, 205, 0, 35)
+layout.CellPadding = UDim2.new(0, 10, 0, 10)
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- [ NOTIFICATION SYSTEM ]
+local function Notify(text)
+    local notif = Instance.new("TextLabel", sg)
+    notif.Size = UDim2.new(0, 200, 0, 40)
+    notif.Position = UDim2.new(0.5, -100, 0, -50)
+    notif.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    notif.TextColor3 = Color3.new(1, 1, 1)
+    notif.Text = text
+    notif.Font = Enum.Font.GothamBold
+    notif.TextSize = 14
+    Instance.new("UICorner", notif).CornerRadius = UDim.new(0, 6)
+    Instance.new("UIStroke", notif).Color = Color3.fromRGB(0, 255, 0)
+    
+    ts:Create(notif, TweenInfo.new(0.5, Enum.EasingStyle.Back), {Position = UDim2.new(0.5, -100, 0, 20)}):Play()
+    task.delay(3, function()
+        ts:Create(notif, TweenInfo.new(0.5, Enum.EasingStyle.Quad), {Position = UDim2.new(0.5, -100, 0, -50)}):Play()
+        task.wait(0.5)
+        notif:Destroy()
+    end)
+end
+
+-- [ ADVANCED BUTTON BUILDER ]
+local function createToggle(name, callback)
+    local btn = Instance.new("TextButton", Scroll)
+    btn.Text = name .. ": OFF"
+    btn.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    btn.Font = Enum.Font.GothamSemibold
+    btn.TextSize = 13
+    btn.AutoButtonColor = false
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    
+    local state = false
+    
+    -- Hover Animations
+    btn.MouseEnter:Connect(function()
+        ts:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = state and Color3.fromRGB(0, 180, 100) or Color3.fromRGB(35, 35, 40)}):Play()
+    end)
+    btn.MouseLeave:Connect(function()
+        ts:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = state and Color3.fromRGB(0, 150, 80) or Color3.fromRGB(25, 25, 30)}):Play()
+    end)
+    
+    btn.MouseButton1Click:Connect(function()
+        state = not state
+        btn.Text = name .. (state and ": ON" or ": OFF")
+        btn.TextColor3 = state and Color3.new(1, 1, 1) or Color3.fromRGB(200, 200, 200)
+        ts:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = state and Color3.fromRGB(0, 150, 80) or Color3.fromRGB(35, 35, 40)}):Play()
+        callback(state)
+    end)
+end
+
+-- [ GAME DETECTION LOGIC ]
+if game.PlaceId == 189707 then
+    -- NATURAL DISASTER SURVIVAL BUILT-IN
+    Notify("NDS Detected! all workin (:")
+    
+    local safePlatform = nil
+    createToggle("Auto-Survive (Sky)", function(state)
+        local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+        if state then
+            if not safePlatform then
+                safePlatform = Instance.new("Part", workspace)
+                safePlatform.Size = Vector3.new(50, 1, 50)
+                safePlatform.Position = Vector3.new(0, 500, 0)
+                safePlatform.Anchored = true
+                safePlatform.Transparency = 0.5
+                safePlatform.Material = Enum.Material.Glass
+            end
+            if hrp then hrp.CFrame = CFrame.new(0, 505, 0) end
+        else
+            if safePlatform then safePlatform:Destroy() safePlatform = nil end
+        end
+    end)
+
+    local trollFling = false
+    createToggle("Troll Fling Aura", function(state) trollFling = state end)
+    
+    createToggle("No Fall Damage", function(state)
+        if state and lp.Character and lp.Character:FindFirstChild("FallDamageScript") then
+            lp.Character.FallDamageScript:Destroy()
+        end
+    end)
+    
+    run.RenderStepped:Connect(function()
+        if trollFling and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+            lp.Character.HumanoidRootPart.RotVelocity = Vector3.new(20000, 20000, 20000)
+        end
+    end)
+
+else
+    -- UNIVERSAL PANEL (Fallback)
+    Notify("Universal Pop Hub Loaded!")
+    
+    local UncFly, UncNoclip, UncESP = false, false, false
+    local bg, bv = nil, nil
+    
+    createToggle("Fly (F)", function(state)
+        UncFly = state
+        local char = lp.Character
+        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+        if state then
+            bg = Instance.new("BodyGyro", char.HumanoidRootPart)
+            bg.P = 9e4 bg.maxTorque = Vector3.new(9e9, 9e9, 9e9) bg.cframe = char.HumanoidRootPart.CFrame
+            bv = Instance.new("BodyVelocity", char.HumanoidRootPart)
+            bv.velocity = Vector3.new(0, 0, 0) bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
+            char.Humanoid.PlatformStand = true
+        else
+            if bg then bg:Destroy() end if bv then bv:Destroy() end
+            char.Humanoid.PlatformStand = false
+        end
+    end)
+    
+    createToggle("Noclip", function(state) UncNoclip = state end)
+    
+    createToggle("Speed Boost", function(state)
+        if lp.Character and lp.Character:FindFirstChild("Humanoid") then
+            lp.Character.Humanoid.WalkSpeed = state and 100 or 16
+        end
+    end)
+    
+    local infJump = false
+    createToggle("Infinite Jump", function(state) infJump = state end)
+    uis.JumpRequest:Connect(function()
+        if infJump and lp.Character and lp.Character:FindFirstChild("Humanoid") then
+            lp.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end)
+
+    createToggle("Fullbright", function(state)
+        game.Lighting.Ambient = state and Color3.new(1,1,1) or Color3.fromRGB(128, 128, 128)
+        game.Lighting.Brightness = state and 2 or 1
+        game.Lighting.GlobalShadows = not state
+    end)
+
+    run.RenderStepped:Connect(function()
+        if UncFly and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") and bg and bv then
+            local cam = workspace.CurrentCamera
+            local moveDir = Vector3.new(0,0,0)
+            if uis:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + cam.CFrame.LookVector end
+            if uis:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - cam.CFrame.LookVector end
+            if uis:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - cam.CFrame.RightVector end
+            if uis:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + cam.CFrame.RightVector end
+            bg.cframe = cam.CFrame
+            bv.velocity = moveDir * 50
+        end
+        if UncNoclip and lp.Character then
+            for _, v in pairs(lp.Character:GetDescendants()) do
+                if v:IsA("BasePart") and v.CanCollide then v.CanCollide = false end
+            end
+        end
+    end)
+end
+
+-- Mobile Toggle / Hide Keybind (RightControl)
+uis.InputBegan:Connect(function(input, gpe)
+    if not gpe and input.KeyCode == Enum.KeyCode.RightControl then
+        MainFrame.Visible = not MainFrame.Visible
+    end
+end)
