@@ -1,0 +1,115 @@
+--[[
+███╗   ███╗ █████╗ ██████╗ ███████╗    ██████╗ ██╗   ██╗    ██╗   ██╗███╗   ██╗ ██████╗
+████╗ ████║██╔══██╗██╔══██╗██╔════╝    ██╔══██╗╚██╗ ██╔╝    ██║   ██║████╗  ██║██╔════╝
+██╔████╔██║███████║██║  ██║█████╗      ██████╔╝ ╚████╔╝     ██║   ██║██╔██╗ ██║██║     
+██║╚██╔╝██║██╔══██║██║  ██║██╔══╝      ██╔══██╗  ╚██╔╝      ██║   ██║██║╚██╗██║██║     
+██║ ╚═╝ ██║██║  ██║██████╔╝███████╗    ██████╔╝   ██║       ╚██████╔╝██║ ╚████║╚██████╗
+╚═╝     ╚═╝╚═╝  ╚═╝╚═════╝ ╚══════╝    ╚═════╝    ╚═╝        ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝
+]]
+
+local lp = game.Players.LocalPlayer
+local run = game:GetService("RunService")
+local uis = game:GetService("UserInputService")
+
+local old = lp.PlayerGui:FindFirstChild("UNC_BEDWARS")
+if old then old:Destroy() end
+
+local sg = Instance.new("ScreenGui", lp.PlayerGui)
+sg.Name = "UNC_BEDWARS"
+sg.ResetOnSpawn = false
+
+local frame = Instance.new("Frame", sg)
+frame.Size = UDim2.new(0, 220, 0, 180)
+frame.Position = UDim2.new(0.5, -110, 0.5, -90)
+frame.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
+
+local border = Instance.new("Frame", frame)
+border.Size = UDim2.new(1, 4, 1, 4)
+border.Position = UDim2.new(0, -2, 0, -2)
+border.ZIndex = 0
+
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Text = "UNC HUB | BEDWARS"
+title.BackgroundTransparency = 1
+title.TextColor3 = Color3.new(1, 1, 1)
+title.Font = Enum.Font.Code
+title.TextSize = 12
+
+-- Rainbow Border
+task.spawn(function()
+    while task.wait() do
+        local c = Color3.fromHSV(tick() % 5 / 5, 1, 1)
+        border.BackgroundColor3 = c
+        title.TextColor3 = c
+    end
+end)
+
+local StickyKill = false
+local NoFall = false
+local VelocityFly = false
+
+-- BUTTON CONSTRUCTOR
+local function btn(txt, pos, callback)
+    local b = Instance.new("TextButton", frame)
+    b.Size = UDim2.new(0.9, 0, 0, 40)
+    b.Position = UDim2.new(0.05, 0, 0, pos)
+    b.Text = txt .. ": OFF"
+    b.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+    b.TextColor3 = Color3.new(1, 1, 1)
+    b.Font = Enum.Font.Code
+    b.BorderSizePixel = 0
+    
+    b.MouseButton1Click:Connect(function()
+        local state = callback()
+        b.Text = txt .. ": " .. (state and "ON" or "OFF")
+        b.BackgroundColor3 = state and Color3.fromRGB(0, 150, 200) or Color3.fromRGB(30, 30, 35)
+    end)
+end
+
+btn("Sticky KillAura", 40, function() StickyKill = not StickyKill return StickyKill end)
+btn("No Fall Damage", 85, function() NoFall = not NoFall return NoFall end)
+btn("Velocity Fly (Z)", 130, function() VelocityFly = not VelocityFly return VelocityFly end)
+
+-- INPUT FOR FLY
+uis.InputBegan:Connect(function(i, g)
+    if not g and i.KeyCode == Enum.KeyCode.Z then
+        VelocityFly = not VelocityFly
+    end
+end)
+
+-- MAIN LOGIC
+run.RenderStepped:Connect(function()
+    pcall(function()
+        local hrp = lp.Character.HumanoidRootPart
+        
+        -- Sticky KillAura (Locks behind nearest enemy)
+        if StickyKill then
+            local target = nil
+            local dist = 30
+            for _, v in pairs(game.Players:GetPlayers()) do
+                if v ~= lp and v.Character and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
+                    local d = (hrp.Position - v.Character.HumanoidRootPart.Position).Magnitude
+                    if d < dist then dist = d target = v end
+                end
+            end
+            if target then
+                hrp.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 2, 2.5)
+            end
+        end
+
+        -- No Fall Logic (Resets velocity before hitting ground)
+        if NoFall and hrp.Velocity.Y < -40 then
+            hrp.Velocity = Vector3.new(hrp.Velocity.X, 0, hrp.Velocity.Z)
+        end
+
+        -- Velocity Fly (Z)
+        if VelocityFly then
+            local cam = workspace.CurrentCamera
+            hrp.Velocity = cam.CFrame.LookVector * 100
+        end
+    end)
+end)
